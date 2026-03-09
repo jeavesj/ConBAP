@@ -8,6 +8,7 @@ import pymol
 from rdkit import RDLogger
 RDLogger.DisableLog('rdApp.*')
 import argparse
+import time
 
 # %%
 
@@ -15,7 +16,9 @@ def generate_pocket(data_dir,data_df, distance=8):
     # 设置data_df的index为pdbid
     data_df = data_df.set_index('pdb')
     complex_id = data_df.index
+    times = []
     for cid in complex_id:
+        t0 = time.time()
         print(cid)
         complex_dir = os.path.join(data_dir, cid)
         if not os.path.exists(complex_dir):
@@ -36,12 +39,16 @@ def generate_pocket(data_dir,data_df, distance=8):
         pymol.cmd.select('Pocket', f'byres {cid} around {distance}')
         pymol.cmd.save(os.path.join(complex_dir, f'Pocket_{distance}A.pdb'), 'Pocket')
         pymol.cmd.delete('all')
+    
+        times.append(time.time()-t0)
+    return times
 
 
 def generate_complex_v1(data_dir, data_df, distance=8, input_ligand_format='sdf'):
     pbar = tqdm(total=len(data_df))
+    times = []
     for i, row in data_df.iterrows():
-        
+        t0 = time.time()
         cid, pKa = row['pdb'], float(row['affinity'])
         complex_dir = os.path.join(data_dir, cid)
         if not os.path.exists(complex_dir):
@@ -73,12 +80,15 @@ def generate_complex_v1(data_dir, data_df, distance=8, input_ligand_format='sdf'
             pickle.dump(complex, f)
 
         pbar.update(1)
+        times.append(time.time() - t0)
+    return times
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--ligand_format', type=str, default='sdf', help="Input ligand file format (currently supported is only .sdf)")
     parser.add_argument('--data_root', type=str, default='./data/toy_set/', help='Path to input data directory')
     parser.add_argument('--input_csv', type=str, default=None, required=False, help='Path to csv with columns "pdb","affinity"')
+    parser.add_argument('--out_csv', type=str, required=True, help='Path to output csv for logging preprocessing times')
     args = parser.parse_args()
     
     distance = 8
@@ -93,9 +103,12 @@ if __name__ == '__main__':
     data_df = pd.read_csv(input_csv)
 
     # generate pocket within 8 Ångström around ligand 
-    generate_pocket(data_dir=data_root,data_df=data_df, distance=distance)
+    t_prep_1 = generate_pocket(data_dir=data_root,data_df=data_df, distance=distance)
 
-    generate_complex_v1(data_root, data_df, distance=distance, input_ligand_format=input_ligand_format)
+    t_prep_2 = generate_complex_v1(data_root, data_df, distance=distance, input_ligand_format=input_ligand_format)
 
+    t_prep_s = [a+b for a, b in zip(t_prep_1, t_prep_2)]
+    t_df = pd.DataFrame({'pdbid': data_df['pdb'], 't_prep_s': t_prep_s})
+    t_df.to_csv(args.out_csv, index=False)
 
 # %%
