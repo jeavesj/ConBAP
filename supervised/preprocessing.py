@@ -36,7 +36,13 @@ def generate_pocket(data_dir,data_df, distance=8):
         pymol.cmd.remove('resn HOH')
         pymol.cmd.load(lig_native_path)
         pymol.cmd.remove('hydrogens')
-        pymol.cmd.select('Pocket', f'byres {cid} around {distance}')
+        
+        try:
+            pymol.cmd.select('Pocket', f'byres {cid} around {distance}')
+        except Exception:
+            pymol.cmd.select('Pocket', f'byres {cid}_protein around {distance}')
+        except Exception as e:
+            raise Exception(e)
         pymol.cmd.save(os.path.join(complex_dir, f'Pocket_{distance}A.pdb'), 'Pocket')
         pymol.cmd.delete('all')
     
@@ -59,10 +65,10 @@ def generate_complex_v1(data_dir, data_df, distance=8, input_ligand_format='sdf'
         if input_ligand_format != 'pdb':
             # ligand_input_path = os.path.join(data_dir, 'renumber_atom_index_same_as_smiles', f'{cid}.{input_ligand_format}')
             # ligand_input_path =f'./data/pdbbind/renumber_atom_index_same_as_smiles/{cid}.{input_ligand_format}'
-            ligand_input_path = os.path.join(data_dir, 'ligand', f'{cid}.{input_ligand_format}')
+            ligand_input_path = os.path.join(complex_dir, f'{cid}_ligand.{input_ligand_format}')
 
         else:
-            ligand_input_path = os.path.join(data_dir, cid, f'{cid}_ligand.pdb')
+            ligand_input_path = os.path.join(complex_dir, f'{cid}_ligand.pdb')
 
         save_path = os.path.join(complex_dir, f"{cid}_{distance}A.rdkit")
         ligand = Chem.MolFromMolFile(ligand_input_path, removeHs=True)
