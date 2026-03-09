@@ -22,6 +22,8 @@ my_lock = Lock()
 RDLogger.DisableLog('rdApp.*')
 np.set_printoptions(threshold=np.inf)
 warnings.filterwarnings('ignore')
+import argparse
+import time
 
 # %%
 def one_of_k_encoding(k, possible_values):
@@ -209,7 +211,9 @@ class GraphDataset(Dataset):
         graph_path_p_list = []
         graph_path_aa_list = []
         graph_path_complex_list = []
+        times = []
         for i, row in data_df.iterrows():
+            t0 = time.time()
             cid, pKa = row['pdb'], float(row['affinity'])
             if type(cid) != str:
                 cid = str(int(cid))
@@ -227,7 +231,7 @@ class GraphDataset(Dataset):
             graph_path_p_list.append(graph_path_p)
             graph_path_aa_list.append(graph_path_aa)
             graph_path_complex_list.append(graph_path_complex)
-
+            times.append(time.time() - t0)
         if self.create:
             print('Generate complex graph...')
             #multi-thread processing
@@ -242,7 +246,8 @@ class GraphDataset(Dataset):
         self.graph_paths_aa = graph_path_aa_list
         self.complex_ids = complex_id_list
         self.graph_paths_complex = graph_path_complex_list
-
+        self.prep_times = times
+    
     def __getitem__(self, idx):
         
         
@@ -301,14 +306,26 @@ class GraphDataset(Dataset):
         return len(self.data_df)
 
 if __name__ == '__main__':
-    data_root = './data'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_root', type=str, default='./data/toy_set/', help='Path to input data directory')
+    parser.add_argument('--input_csv', type=str, default=None, required=False, help='Path to csv with columns "pdb","affinity"')
+    parser.add_argument('--out_csv', type=str, required=True, help='Path to output csv for logging preprocessing times')
+    args = parser.parse_args()
     
-    data_dir = os.path.join(data_root, 'toy_set')
-    data_df = pd.read_csv(os.path.join(data_root, 'toy_set/toy_set.csv'))
+    data_root = args.data_root
+    if args.input_csv is None:
+        input_csv = os.path.join(data_root, 'toy_set.csv')
+    else:
+        input_csv = args.input_csv
+
+    data_df = pd.read_csv(input_csv)
     
     # # three hours
-    toy_set = GraphDataset(data_dir, data_df, graph_type='ConBAP', dis_threshold=8, create=True)
+    toy_set = GraphDataset(data_root, data_df, graph_type='ConBAP', dis_threshold=8, create=True)
     print('finish!')
+    
+    time_df = pd.DataFrame(toy_set.complex_ids, toy_set.prep_times)
+    time_df.to_csv(args.out_csv, index=False)
 
     
 
