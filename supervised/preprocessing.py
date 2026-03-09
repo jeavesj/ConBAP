@@ -7,6 +7,7 @@ from tqdm import tqdm
 import pymol
 from rdkit import RDLogger
 RDLogger.DisableLog('rdApp.*')
+import argparse
 
 # %%
 
@@ -74,18 +75,27 @@ def generate_complex_v1(data_dir, data_df, distance=8, input_ligand_format='sdf'
         pbar.update(1)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--ligand_format', type=str, default='sdf', help="Input ligand file format (currently supported is only .sdf)")
+    parser.add_argument('--data_root', type=str, default='./data/toy_set/', help='Path to input data directory')
+    parser.add_argument('--input_csv', type=str, default=None, required=False, help='Path to csv with columns "pdb","affinity"')
+    args = parser.parse_args()
+    
     distance = 8
-    input_ligand_format = 'sdf'
-    data_root = './data/toy_set/'
-    # data_dir = os.path.join(data_root, 'pdbbind/v2020-other-PL')
-    # data_df = pd.read_csv(os.path.join(data_root, 'pdbbind/data.csv'))
-    data_dir = os.path.join(data_root)
-    data_df = pd.read_csv(os.path.join(data_root, 'toy_set.csv'))
+    input_ligand_format = args.ligand_format
+    data_root = args.data_root
+    
+    if args.input_csv is None:
+        input_csv = os.path.join(data_root, 'toy_set.csv')
+    else:
+        input_csv = args.input_csv
+
+    data_df = pd.read_csv(input_csv)
 
     # generate pocket within 8 Ångström around ligand 
-    generate_pocket(data_dir=data_dir,data_df=data_df, distance=distance)
+    generate_pocket(data_dir=data_root,data_df=data_df, distance=distance)
 
-    generate_complex_v1(data_dir, data_df, distance=distance, input_ligand_format=input_ligand_format)
+    generate_complex_v1(data_root, data_df, distance=distance, input_ligand_format=input_ligand_format)
 
 
 # %%
