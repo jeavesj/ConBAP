@@ -1,0 +1,21 @@
+#!/bin/bash --login
+#SBATCH --job-name=conbap_pred
+#SBATCH --time=02:59:00
+#SBATCH --mem=32G
+#SBATCH --gpus=h200:1
+#SBATCH --cpus-per-task=2
+#SBATCH --output=/mnt/scratch/jeaves/ConBAP/logs/%x_%A_%a.out
+#SBATCH --error=/mnt/scratch/jeaves/ConBAP/logs/%x_%A_%a.err
+
+#set -euo pipefail
+
+module purge
+module load Miniforge3
+conda activate conbap
+
+BASE_DIR="/mnt/scratch/jeaves/ConBAP"
+DATA_DIR="${BASE_DIR}/coreset"
+INDEX_FILE="${BASE_DIR}/supervised/data/pdbbind/data_test.csv"
+OUT_CSV="${BASE_DIR}/pred_times-test.csv"
+
+python3 supervised/predict.py --data_root "$DATA_DIR" --input_csv "$INDEX_FILE" --out_csv "$OUT_CSV" 
