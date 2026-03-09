@@ -71,9 +71,14 @@ def generate_complex_v1(data_dir, data_df, distance=8, input_ligand_format='sdf'
             ligand_input_path = os.path.join(complex_dir, f'{cid}_ligand.pdb')
 
         save_path = os.path.join(complex_dir, f"{cid}_{distance}A.rdkit")
-        ligand = Chem.MolFromMolFile(ligand_input_path, removeHs=True)
-        if ligand == None:
-            print(f"Unable to process ligand of {cid}")
+        if input_ligand_format == 'pdb':
+            ligand = Chem.MolFromPDBFile(ligand_input_path, sanitize=False, removeHs=True)
+        elif input_ligand_format == 'mol2':
+            ligand = Chem.MolFromMol2File(ligand_input_path, sanitize=False, removeHs=True)
+        else:
+            ligand = Chem.MolFromMolFile(ligand_input_path, sanitize=False, removeHs=True)
+        if ligand is None:
+            print(f"Unable to process ligand of {cid}: {ligand_input_path}")
             continue
 
         pocket = Chem.MolFromPDBFile(pocket_path,sanitize=False, removeHs=True)#
