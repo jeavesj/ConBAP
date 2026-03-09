@@ -26,8 +26,8 @@ def generate_pocket(data_dir,data_df, distance=8):
 
         # lig_native_path = f"./data/pdbbind/renumber_atom_index_same_as_smiles/{cid}.sdf"
         # protein_path = f"./data/pdbbind/protein_remove_extra_chains_10A/{cid}_protein.pdb"
-        lig_native_path = os.path.join(data_dir, 'ligand', f'{cid}.sdf')
-        protein_path = os.path.join(data_dir, 'protein', f'{cid}_protein.pdb')
+        lig_native_path = os.path.join(complex_dir, f'{cid}_ligand.sdf')
+        protein_path = os.path.join(complex_dir, f'{cid}_protein.pdb')
 
         if os.path.exists(os.path.join(complex_dir, f'Pocket_{distance}A.pdb')):
             continue
