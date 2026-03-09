@@ -37,12 +37,7 @@ def generate_pocket(data_dir,data_df, distance=8):
         pymol.cmd.load(lig_native_path)
         pymol.cmd.remove('hydrogens')
         
-        try:
-            pymol.cmd.select('Pocket', f'byres {cid} around {distance}')
-        except Exception:
-            pymol.cmd.select('Pocket', f'byres {cid}_protein around {distance}')
-        except Exception as e:
-            raise Exception(e)
+        pymol.cmd.select('Pocket', f'byres ({cid}_protein within {distance} of {cid}_ligand)')
         pymol.cmd.save(os.path.join(complex_dir, f'Pocket_{distance}A.pdb'), 'Pocket')
         pymol.cmd.delete('all')
     
