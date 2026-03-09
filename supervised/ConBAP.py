@@ -8,7 +8,7 @@ from torch_geometric.nn import global_mean_pool, max_pool_x
 from torch_geometric.nn.conv import  GATv2Conv
 from HIL import CrossAttentionBlock,GVP_embedding,InteractionBlock,MPNNL,EGNN_complex
 import numpy as np
-
+import time
 
 class ConBAP(nn.Module):
     def __init__(self, node_dim, hidden_dim):
@@ -126,6 +126,7 @@ class downstream_affinity(nn.Module):
         self.fc = FC(hidden_dim*2, hidden_dim, 1, 0.1, 1)  #3
 
     def forward(self, data):
+        t0 = time.time()
         data_complex = data['complex_features']
         data_complex.x = self.model.lin_node_complex(data_complex.x)  
         x_c = self.model.egnn(data_complex) # x_c:feature of nodes
@@ -137,7 +138,7 @@ class downstream_affinity(nn.Module):
         
         affinity_x_c = affinity_x_c.view(-1)
         
-        return affinity_x_c
+        return affinity_x_c, time.time()-t0
         
 class complex_free(nn.Module):
     def __init__(self, model, hidden_dim):
