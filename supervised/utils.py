@@ -236,7 +236,7 @@ def save_model_dict(model, model_dir, msg):
     print("model has been saved to %s." % (model_path))
 
 def load_model_dict(model, ckpt):
-    model.load_state_dict(torch.load(ckpt))
+    model.load_state_dict(torch.load(ckpt, map_location=next(model.parameters()).device))
 
 def del_file(path):
     for i in os.listdir(path):
